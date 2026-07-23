@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0c1117;
+  --bg-elevated: #141b24;
+  --border: #243041;
+  --text: #e8eef6;
+  --muted: #8b9bb0;
+  --accent: #3d9cfd;
+  --accent-soft: rgba(61, 156, 253, 0.15);
+  --success: #3ecf8e;
+  --danger: #f07178;
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #1a2740 0%, transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, #1a3329 0%, transparent 50%),
+    var(--bg);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+}
+
+.shell {
+  @apply mx-auto w-full max-w-3xl px-6 py-12;
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #041018;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--accent-soft);
+}
+
+.input {
+  @apply w-full rounded-lg border px-3 py-2.5 text-sm outline-none;
+  background: #0a0f14;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.label {
+  @apply mb-1.5 block text-sm;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.step-title {
+  @apply text-2xl font-semibold tracking-tight;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  background: var(--accent-soft);
+  color: var(--accent);
+}

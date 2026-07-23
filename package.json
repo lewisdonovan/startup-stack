@@ -1,0 +1,18 @@
+{
+  "name": "startup-stack",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @startup-stack/web",
+    "build": "npm run build -w @startup-stack/catalog && npm run build -w @startup-stack/workspace-gen && npm run build -w @startup-stack/web",
+    "db:generate": "npm run db:generate -w @startup-stack/web",
+    "db:migrate": "npm run db:migrate -w @startup-stack/web",
+    "db:push": "npm run db:push -w @startup-stack/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

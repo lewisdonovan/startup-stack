@@ -1,8 +1,8 @@
 ---
 name: Notion → Email Notifications
 description: Set up automated email notifications when Notion pages are updated.
-tags: [notion, resend]
-required: [notion, resend]
+tags: [notion, resend, n8n]
+required: [notion, resend, n8n]
 ---
 
 # Notion → Email Notifications

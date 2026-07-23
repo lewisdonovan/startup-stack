@@ -41,21 +41,22 @@ User selects services
 │    cross-platform/          │
 │  scripts/                   │
 │    verify-mcp.sh            │ ← Connectivity checks
-│    setup-openrouter.sh      │
+│    setup-n8n.sh             │ ← Local n8n via Docker
+│  docker-compose.n8n.yml     │ ← n8n Compose file
 └─────────────────────────────┘
 ```
 
 ## Account Provisioning Strategy
 
-Each service follows a tiered fallback:
+Each service follows a tiered fallback (implemented in `skills/bootstrap/`):
 
 | Tier | Method | Example Services |
 |------|--------|-----------------|
-| 1 | **API** — fully automated | n8n (Docker), Supabase (Management API), Resend (API keys) |
-| 2 | **Agent browser** — automated via headless browser | Services with simple signup flows |
-| 3 | **Human-assisted** — deep-link URLs + step-by-step guidance | Services with OTP/CAPTCHA/OAuth requirements |
+| 1 | **API / Docker** — automated | n8n (`scripts/setup-n8n.sh`), Supabase (Management API after access token) |
+| 2 | **Agent browser** — user-supervised in your browser (Google SSO → email+password) | OpenRouter, Resend, Linear, Notion |
+| 3 | **Human-assisted** — deep-link URLs + step-by-step guidance | Slack, Figma, Xero, Shopify, Google Workspace, Airtable |
 
-When the agent encounters an OTP or email verification step, it pauses and asks the user to either click the verification link or provide the code.
+When the agent encounters an OTP, email verification, CAPTCHA, or OAuth consent step, it **pauses** and asks you to complete that step in the browser (or paste a code). Credentials are written to gitignored `.env` — treat that file as the vault for bootstrap-created account passwords.
 
 ## Supported Services
 
@@ -68,18 +69,18 @@ When the agent encounters an OTP or email verification step, it pauses and asks 
 
 | Service | Provisioning Method | MCP Server |
 |---------|--------------------|------------|
-| Linear | Browser / manual | Vendor-maintained |
-| Slack | Workspace creation API / browser | Available |
-| Figma | Browser / manual | Official |
-| Notion | Browser / manual | Vendor-maintained |
-| Airtable | API (Enterprise) / browser | Available |
-| n8n | Docker Compose (local) | Available |
-| Google Workspace | Admin SDK / browser | Available |
-| Resend | API (keys) | Available |
-| Xero | OAuth / browser | Available |
-| Supabase | Management API / CLI | Vendor-maintained |
-| Storybook | Local init | Available |
-| Shopify | Partner dashboard / browser | Available |
+| Linear | Tier 2 browser / Tier 3 manual | Vendor-maintained |
+| Slack | Tier 3 (workspace + app) | Available |
+| Figma | Tier 3 manual | Official |
+| Notion | Tier 2 browser / Tier 3 manual | Vendor-maintained |
+| Airtable | Tier 3 manual | Available |
+| n8n | Tier 1 Docker Compose (local) | Available |
+| Google Workspace | Tier 3 (Google Cloud / OAuth) | Available |
+| Resend | Tier 2 browser / Tier 3 manual | Available |
+| Xero | Tier 3 OAuth | Available |
+| Supabase | Tier 1 Management API (after token) | Vendor-maintained |
+| OpenRouter | Tier 2 browser / Tier 3 manual | Available |
+| Shopify | Tier 3 Partner dashboard | Available |
 
 ## Skills System
 
@@ -101,26 +102,61 @@ skills/
 
 A skill is only pulled into the project if **all** its tagged platforms have been selected by the user.
 
-## Quick Start
+## Quick Start — Onboarding Web App (local Docker)
 
 ```bash
-# Run the bootstrapper
-npx startup-stack bootstrap
+# 1. Copy platform env
+cp apps/web/.env.example apps/web/.env
+# Edit AUTH_SECRET and ENCRYPTION_KEY
 
-# Or clone and run locally
-git clone https://github.com/lewisdonovan/startup-stack.git
-cd startup-stack
+# 2. Start Postgres + Mailpit
+docker compose up -d db mailpit
+
+# 3. Install & migrate
 npm install
-npm run bootstrap
+npm run build -w @startup-stack/catalog
+npm run build -w @startup-stack/workspace-gen
+npm run db:migrate -w @startup-stack/web
+
+# 4. Run the app
+npm run dev
+# Open http://localhost:3000
+# Magic links appear in Mailpit: http://localhost:8025
+
+# Optional local n8n
+docker compose --profile n8n up -d
 ```
 
-The bootstrapper will:
-1. Ask which services you want
-2. Create the project folder structure
-3. Set up OpenRouter with the free endpoint
-4. Begin account provisioning (with fallbacks)
-5. Generate MCP configs and pull skills
-6. Drop you into a ready-to-use agentic workspace
+Full Docker (app + db + mailpit):
+
+```bash
+docker compose up --build
+```
+
+## Quick Start — Agent skill (harness-only)
+
+Preferred path when working inside this repo with an AI harness:
+
+```bash
+git clone https://github.com/lewisdonovan/startup-stack.git
+cd startup-stack
+# Open in Cursor / Claude Code / Gemini CLI, then: "Run /bootstrap" or "Set up my Startup Stack"
+```
+
+See [docs/getting-started.md](docs/getting-started.md) for harness setup, profile collection, and OTP/CAPTCHA pauses.
+
+Aspirational CLI (not shipped yet):
+
+```bash
+npx startup-stack bootstrap
+```
+
+The onboarding app / bootstrap skill will:
+1. Collect name, email, and company name
+2. Ask which services you want (and which accounts already exist)
+3. Guide OAuth or API-key setup (local n8n via Docker profile)
+4. Encrypt keys in Postgres; export a one-time workspace zip
+5. Verify connectivity with `scripts/verify-mcp.sh`
 
 ## Using the Generated Project
 
@@ -152,9 +188,11 @@ my-startup/
 │   ├── supabase/
 │   └── cross-platform/
 └── scripts/
-    ├── verify-mcp.sh      # Check MCP server connectivity
-    └── setup-openrouter.sh # Configure OpenRouter free endpoint
+    ├── verify-mcp.sh      # Check MCP server connectivity (auto-loads .env)
+    └── setup-n8n.sh       # Start local n8n via Docker Compose
 ```
+
+Also at repo root: `docker-compose.n8n.yml`, and bootstrap playbooks under `skills/bootstrap/playbooks/`.
 
 ## License
 

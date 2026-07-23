@@ -2,9 +2,15 @@
 .env
 .env.local
 .env.*.local
+apps/web/.env
 
 # Dependencies
 node_modules/
+
+# Next.js / build
+.next/
+dist/
+*.tsbuildinfo
 
 # OS files
 .DS_Store

@@ -1,200 +1,162 @@
 # Getting Started
 
-Get your agentic startup workspace set up in under 10 minutes. No CLI, no configuration files to edit by hand — just open this folder and let your AI assistant do the work.
+Run the Startup Stack onboarding app locally with Docker, then walk through signup → service setup → workspace download.
 
 ---
 
-## Quick Start
+## What you get
 
-### 1. Install an AI harness
+1. **Web app** at http://localhost:3000 — magic-link auth, service picker, guided/OAuth connect, secure key storage
+2. **Postgres** — users, workspaces, encrypted API keys
+3. **Mailpit** — catch magic-link emails in local dev (http://localhost:8025)
+4. **Workspace zip** — `.mcp.json`, filled `.env`, skills, and scripts for your AI harness
 
-Pick any of these and install it:
+---
 
-| Harness | Link |
-|---------|------|
-| **Claude Code** (recommended) | https://claude.ai/code |
-| **Gemini CLI** | `npm install -g @anthropic-ai/gemini-cli` |
-| **OpenCode** | https://github.com/opencode-ai/opencode |
-| **Dexto** | https://dexto.ai |
+## Prerequisites
 
-Claude Code gives the best experience since it natively reads `skills/` files and `CLAUDE.md` system prompts.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose v2)
+- Git
 
-### 2. Clone and open
+Node.js is only needed if you run the app outside Docker (see [Dev without rebuilding the web image](#dev-without-rebuilding-the-web-image)).
+
+---
+
+## 1. Clone and configure
 
 ```bash
 git clone https://github.com/lewisdonovan/startup-stack.git
 cd startup-stack
+
+cp apps/web/.env.example apps/web/.env
 ```
 
-Then open the folder in your harness:
+Edit `apps/web/.env` and set at least:
+
+| Variable | Notes |
+|----------|--------|
+| `AUTH_SECRET` | Long random string (session signing) |
+| `ENCRYPTION_KEY` | Long random string (encrypts SaaS keys at rest) |
+
+Defaults for `DATABASE_URL`, `EMAIL_SERVER`, and `APP_URL` work with Compose as shipped. Inside the `web` container, Compose overrides the DB/email hosts to `db` and `mailpit`.
+
+Optional OAuth (otherwise the UI uses API-key paste):
+
+| Variable | Redirect URI to register |
+|----------|--------------------------|
+| `LINEAR_OAUTH_CLIENT_ID` / `LINEAR_OAUTH_CLIENT_SECRET` | `http://localhost:3000/api/oauth/linear/callback` |
+| `NOTION_OAUTH_CLIENT_ID` / `NOTION_OAUTH_CLIENT_SECRET` | `http://localhost:3000/api/oauth/notion/callback` |
+
+---
+
+## 2. Start with Docker Compose
 
 ```bash
-claude          # Claude Code
-gemini          # Gemini CLI
-opencode        # OpenCode
+docker compose up --build
 ```
 
-### 3. Start the bootstrap
+This starts:
 
-In the chat, type:
+| Service | Port | Role |
+|---------|------|------|
+| `web` | 3000 | Next.js onboarding app |
+| `db` | 5432 | Postgres |
+| `mailpit` | 8025 (UI), 1025 (SMTP) | Magic-link inbox |
 
-> "Run /bootstrap"
+Migrations run when the web container starts.
 
-Or simply:
+Optional n8n (automation):
 
-> "Set up my Startup Stack"
-
-The assistant will:
-1. Collect a short profile (name, email, company)
-2. Show you the service catalog and ask which services you want
-3. Provision accounts — browser automation for OpenRouter, Resend, Linear, and Notion; Docker for n8n; Management API for Supabase after an access token
-4. Pause when email verification, CAPTCHA, or OAuth consent is needed
-5. Write credentials to gitignored `.env`, generate MCP configs and skills
-6. Verify everything is connected
-
-For best results, use a harness with browser tools (e.g. Cursor + Chrome DevTools MCP) so Tier 2 services can be driven in your browser. Without a browser MCP, those services fall back to deep-link guidance.
-
-That's it. Your workspace is ready.
-
----
-
-## How It Works
-
-```
-You                     AI Harness                  Services
- │                      │                              │
- │  "Run /bootstrap"    │                              │
- ├─────────────────────►│                              │
- │                      │  Reads skills/bootstrap      │
- │                      │  Collects name/email/company │
- │  profile + services│                              │
- ├─────────────────────►│                              │
- │                      │  Browser / Docker / API      │
- │  (OTP / CAPTCHA)    │  playbooks as needed         │
- │◄─────────────────────┤─────────────────────────────►│
- │                      │  Writes .env (gitignored)    │
- │                      │  Generates .mcp.json         │
- │                      │  Generates CLAUDE.md         │
- │                      │  Runs verify-mcp.sh          │
- │  "All done!"        │                              │
- │◄─────────────────────┤                              │
+```bash
+docker compose --profile n8n up -d
 ```
 
----
-
-## Service Selection Guide
-
-Not sure which services to pick? Here's a cheat sheet:
-
-### "I'm building a SaaS product"
-
-| Service | Why |
-|---------|-----|
-| OpenRouter | Free AI inference |
-| Linear | Bug tracking and sprint planning |
-| Supabase | Database, auth, and storage |
-| Resend | Welcome emails, password resets |
-| Notion | Product docs and wikis |
-
-### "I'm running an online store"
-
-| Service | Why |
-|---------|-----|
-| OpenRouter | Free AI inference |
-| Shopify | Your storefront |
-| Xero | Accounting and invoicing |
-| Notion | Store operations docs |
-| Slack | Team communication |
-
-### "I'm a solo founder (keep it simple)"
-
-| Service | Why |
-|---------|-----|
-| OpenRouter | Free AI inference |
-| Notion | Your entire operation (docs, tasks, CRM) |
-
-### "I have no idea, just start"
-
-Say "not sure" — it'll set up OpenRouter + Context7 by default. For a typical SaaS stack, ask for Linear, Supabase, and Resend as well.
+Then open http://localhost:5678, finish owner setup, and create an API key when the app asks for it.
 
 ---
 
-## After Bootstrap
+## 3. Use the onboarding flow
 
-Once the setup is complete, you have a fully agentic workspace. Here's what you can ask the AI assistant to do:
+1. Open http://localhost:3000
+2. Sign up with name, company, and email
+3. Open http://localhost:8025 and click the magic link
+4. Select services (OpenRouter is required; Context7 is always included)
+5. For each service: connect via OAuth if configured, or follow on-screen signup steps and paste keys
+6. On the review page, download the workspace zip (single-use link, ~10 minutes)
 
-### Project Management
-- "Create a backlog project in Linear"
-- "Set up a sprint for this week"
-- "Triage the pending issues"
+Unpack the zip, then:
 
-### Database
-- "Create a users table with email, name, and role"
-- "Add RLS policies so users can only see their own data"
-- "Insert a test user into the database"
+```bash
+bash scripts/sync-skills.sh   # copy skills into harness folders
+bash scripts/verify-mcp.sh    # check API connectivity
+```
 
-### Email
-- "Send a welcome email to a new user"
-- "Create a password reset email template"
-- "Send a transactional receipt for order #123"
-
-### Documentation
-- "Create a product roadmap page in Notion"
-- "Set up a team wiki with onboarding docs"
-
-### Cross-Platform Workflows
-- "Sync Notion feature requests to Linear issues"
-- "Create Xero invoices for new Shopify orders"
+Open the folder in Claude Code, Cursor, or your preferred harness.
 
 ---
 
-## Adding New Services Later
+## Services in v1
 
-You don't need to configure everything at the start. You can always add services later:
+| Service | How you connect |
+|---------|-----------------|
+| OpenRouter | API key (required) |
+| Context7 | Built-in (no key) |
+| Linear | OAuth or API key |
+| Notion | OAuth or integration secret |
+| Resend | API key |
+| Supabase | Access token + project ref |
+| n8n | Local Docker profile + API key |
 
-1. Get the credentials (see `docs/services.md` for signup instructions)
-2. Add them to your `.env` file
-3. Add the MCP server config to `.mcp.json`
-4. Restart your AI harness
+---
 
-Or just ask the assistant: "Set up Slack" — it can walk you through adding a new service to the existing config.
+## Dev without rebuilding the web image
+
+Useful while iterating on the Next.js app:
+
+```bash
+docker compose up -d db mailpit
+
+cp apps/web/.env.example apps/web/.env   # first time only
+npm install
+npm run build -w @startup-stack/catalog
+npm run build -w @startup-stack/workspace-gen
+npm run db:migrate -w @startup-stack/web
+npm run dev
+```
+
+App: http://localhost:3000 · Mailpit: http://localhost:8025
 
 ---
 
 ## Troubleshooting
 
-### "MCP server failed to connect"
+### Magic link never arrives
 
-Check that your `.env` file exists and has the right credentials for that service. Then run:
+Confirm Mailpit is up (`docker compose ps`) and open http://localhost:8025. Check `EMAIL_SERVER` points at Mailpit (`smtp://localhost:1025` for host-run `npm run dev`, or `smtp://mailpit:1025` inside Compose).
 
-```bash
-bash scripts/verify-mcp.sh
-```
+### `docker compose up` fails on `env_file`
 
-The script auto-loads `.env` from the project root when present. This will show which services are working and which are failing.
+Ensure `apps/web/.env` exists (`cp apps/web/.env.example apps/web/.env`).
 
-### "I don't have an API key for X"
+### Download says not all services are ready
 
-Prefer re-running bootstrap for that service (see `skills/bootstrap/playbooks/`). Otherwise see `docs/services.md` for signup URLs. Tier 2 services may need you to complete email verification or a CAPTCHA in the browser; Tier 3 services are deep-link guided.
+Finish every selected service on its connect page until status is **Ready**, then retry export.
 
-### "My AI harness doesn't read skills/"
+### Push / port already in use
 
-Not all harnesses support the skills/ directory natively. If yours doesn't, open `skills/bootstrap/SKILL.md` and paste the contents into the chat. The assistant can still follow the instructions.
+Something else may be bound to 3000, 5432, or 8025. Stop the other process or change the published ports in `docker-compose.yml`.
 
-### "n8n won't start"
-
-n8n requires Docker. Install Docker Desktop from https://docker.com, then run:
+### n8n won't start
 
 ```bash
-bash scripts/setup-n8n.sh
+docker compose --profile n8n up -d
+docker compose --profile n8n logs -f n8n
 ```
-
-Open http://localhost:5678 to finish owner setup, create an API key in Settings → n8n API, and ensure `N8N_BASE_URL` / `N8N_API_KEY` are in `.env` (bootstrap does this when following the n8n playbook).
 
 ---
 
-## Need Help?
+## Further reading
 
-- **Service signup questions:** See `docs/services.md` for detailed instructions
-- **API reference:** Context7 is always available in the AI harness to look up current API docs
-- **MCP server issues:** Run `bash scripts/verify-mcp.sh` to diagnose
+- [docs/onboarding-app.md](onboarding-app.md) — short ops notes (ports, OAuth, export security)
+- [docs/services.md](services.md) — broader service catalog reference
+- [skills/](../skills/) — source skills packaged into downloaded workspaces

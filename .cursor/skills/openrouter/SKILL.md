@@ -10,6 +10,8 @@ Set up OpenRouter for free AI inference via the `openrouter/free` endpoint.
 
 ## Setup
 
+**Prefer bootstrap:** follow [skills/bootstrap/playbooks/openrouter.md](../bootstrap/playbooks/openrouter.md) (agent browser, hybrid auth). Manual fallback:
+
 1. Go to https://openrouter.ai/signup and create an account
 2. Go to https://openrouter.ai/settings/keys and generate a new API key
 3. Add the key to `.env`: `OPENROUTER_API_KEY=<your-key>`

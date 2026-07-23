@@ -10,10 +10,13 @@ Set up n8n for workflow automation, pipelines, and integrations.
 
 ## Setup
 
-1. Go to [n8n.io](https://n8n.io), create an account (or use your self-hosted instance)
-2. Go to **Settings → Credentials** and create a new API key
-3. Add to `.env`:
-   - `N8N_BASE_URL=<your-n8n-instance-url>` (e.g., `https://n8n.lewisygrecia.com`)
+**Prefer bootstrap:** follow [skills/bootstrap/playbooks/n8n.md](../bootstrap/playbooks/n8n.md) — local Docker via `bash scripts/setup-n8n.sh`, then browser owner + API key. Manual fallback:
+
+1. Local: `bash scripts/setup-n8n.sh` then open http://localhost:5678
+2. Or use [n8n Cloud](https://n8n.io) / your own self-hosted instance
+3. Go to **Settings → n8n API** and create a new API key
+4. Add to `.env`:
+   - `N8N_BASE_URL=<your-n8n-instance-url>` (e.g. `http://localhost:5678`)
    - `N8N_API_KEY=<your-api-key>`
 
 ## Usage

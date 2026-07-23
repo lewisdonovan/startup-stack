@@ -2,6 +2,8 @@
 
 Complete reference for all 12 supported services. Used by the bootstrap skill to present the catalog to the user.
 
+Automated provisioning playbooks live in [`skills/bootstrap/playbooks/`](../skills/bootstrap/playbooks/). Shared rules (hybrid auth, human gates, `.env` writing): [`_protocol.md`](../skills/bootstrap/playbooks/_protocol.md).
+
 ---
 
 ## Always Active
@@ -9,12 +11,12 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 ### OpenRouter
 
 - **Purpose:** AI model routing with free tier available
-- **Provisioning:** Tier 1 — API
+- **Provisioning:** Tier 2 — Agent browser ([playbooks/openrouter.md](../skills/bootstrap/playbooks/openrouter.md))
 - **Signup:** https://openrouter.ai/signup
 - **API Key:** Create at https://openrouter.ai/settings/keys
-- **Env vars:** `OPENROUTER_API_KEY`
+- **Env vars:** `OPENROUTER_API_KEY` (optional `OPENROUTER_ACCOUNT_PASSWORD`)
 - **MCP server:** `@openrouter/mcp-server` or HTTP SSE transport to `https://openrouter.ai/api/v1`
-- **Notes:** Use the `openrouter/free` endpoint for zero-cost inference with 200K token context.
+- **Notes:** Use the `openrouter/free` endpoint for zero-cost inference with 200K token context. Human gates: CAPTCHA, email verification.
 
 ### Context7
 
@@ -29,12 +31,12 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 ### Linear
 
 - **Purpose:** Project management, issues, sprints, roadmaps
-- **Provisioning:** Tier 3 — Human-assisted
+- **Provisioning:** Tier 2 — Agent browser ([playbooks/linear.md](../skills/bootstrap/playbooks/linear.md))
 - **Signup:** https://linear.app/signup
 - **API Key:** Settings → APIs → New API Key (Personal API key)
-- **Env vars:** `LINEAR_API_KEY`, `LINEAR_WEBHOOK_SECRET`
+- **Env vars:** `LINEAR_API_KEY`, `LINEAR_WEBHOOK_SECRET` (optional `LINEAR_ACCOUNT_PASSWORD`)
 - **MCP server:** `@linear-app/mcp-server`
-- **Notes:** Most startups start with Linear for issue tracking. GraphQL API.
+- **Notes:** Most startups start with Linear for issue tracking. GraphQL API. Human gates: CAPTCHA, email verification, OAuth consent.
 
 ### Slack
 
@@ -59,32 +61,32 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 ### Notion
 
 - **Purpose:** Documentation, wikis, knowledge base
-- **Provisioning:** Tier 3 — Human-assisted (integration setup)
+- **Provisioning:** Tier 2 — Agent browser ([playbooks/notion.md](../skills/bootstrap/playbooks/notion.md))
 - **Signup:** https://www.notion.so/signup
 - **API Key:** Settings → My integrations → New integration, generate secret
-- **Env vars:** `NOTION_API_KEY`, `NOTION_INTEGRATION_TYPE`
+- **Env vars:** `NOTION_API_KEY`, `NOTION_INTEGRATION_TYPE` (optional `NOTION_ACCOUNT_PASSWORD`)
 - **MCP server:** `@modelcontextprotocol/notion`
-- **Notes:** Each page/database must be shared with the integration explicitly.
+- **Notes:** Each page/database must be shared with the integration explicitly (human gate after bootstrap).
 
 ### Supabase
 
 - **Purpose:** PostgreSQL database, authentication, storage
-- **Provisioning:** Tier 1 — API (Management API)
+- **Provisioning:** Tier 1 — Browser access token + Management API ([playbooks/supabase.md](../skills/bootstrap/playbooks/supabase.md))
 - **Signup:** https://supabase.com/dashboard/sign_up
-- **Access Token:** Settings → Access tokens → New access token (with project:read, project:write scopes)
-- **Env vars:** `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`
+- **Access Token:** https://supabase.com/dashboard/account/tokens
+- **Env vars:** `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`
 - **MCP server:** `@supabase/mcp`
-- **Notes:** Management API allows creating projects, tables, and RLS policies programmatically.
+- **Notes:** After a personal access token exists, bootstrap creates the project and fetches keys via the Management API.
 
 ### Resend
 
 - **Purpose:** Transactional email, email templates
-- **Provisioning:** Tier 1 — API (API keys)
+- **Provisioning:** Tier 2 — Agent browser ([playbooks/resend.md](../skills/bootstrap/playbooks/resend.md))
 - **Signup:** https://resend.com/signup
 - **API Key:** Keys → Create API key
-- **Env vars:** `RESEND_API_KEY`
+- **Env vars:** `RESEND_API_KEY` (optional `RESEND_ACCOUNT_PASSWORD`)
 - **MCP server:** `@anthropic/resend-mcp`
-- **Notes:** Simple API. Good for welcome emails, notifications, password resets.
+- **Notes:** Simple API. Good for welcome emails, notifications, password resets. Email verification is a common human gate.
 
 ### Xero
 
@@ -109,12 +111,12 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 ### n8n
 
 - **Purpose:** Workflow automation, event-driven pipelines
-- **Provisioning:** Tier 1 — Docker Compose (local)
-- **Signup:** Self-hosted via Docker
-- **API Key:** Settings → Credentials → API key
-- **Env vars:** `N8N_BASE_URL`, `N8N_API_KEY`
-- **MCP server:** `@n8n-mcp` (community)
-- **Notes:** Run via Docker Compose. Useful for connecting services that don't have native MCP servers.
+- **Provisioning:** Tier 1 — Docker Compose (local) ([playbooks/n8n.md](../skills/bootstrap/playbooks/n8n.md))
+- **Signup:** Self-hosted via `docker-compose.n8n.yml` / `bash scripts/setup-n8n.sh`
+- **API Key:** Settings → n8n API → Create key
+- **Env vars:** `N8N_BASE_URL`, `N8N_API_KEY` (optional `N8N_ACCOUNT_PASSWORD`)
+- **MCP server:** `@n8n-mcp` (community) or SSE transport
+- **Notes:** Owner account is created in the browser on first run at http://localhost:5678. Cloud/self-hosted elsewhere remains a manual fallback.
 
 ### Google Workspace
 
@@ -129,12 +131,12 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 ### Airtable
 
 - **Purpose:** Spreadsheet-database hybrid, project tracking
-- **Provisioning:** Tier 1 — API (Enterprise) / Tier 3 — Browser
+- **Provisioning:** Tier 3 — Human-assisted (browser / API)
 - **Signup:** https://airtable.com/signup
 - **Access Token:** Account settings → Personal access tokens → Create new token
 - **Env vars:** `AIRTABLE_ACCESS_TOKEN`, `AIRTABLE_ORGANIZATION_ID`
 - **MCP server:** `@airtable/mcp`
-- **Notes:** Free tier limited. Enterprise API access for automation.
+- **Notes:** Free tier limited. Enterprise API access for automation. Not in the Tier 2 pilot yet.
 
 ---
 
@@ -142,6 +144,8 @@ Complete reference for all 12 supported services. Used by the bootstrap skill to
 
 | Tier | Method | Services |
 |------|--------|----------|
-| 1 | Fully automated via API or Docker | OpenRouter, Supabase, Resend, n8n, Airtable |
-| 2 | Agent browser (headless) | — (reserved for future) |
-| 3 | Human-assisted (deep links + guidance) | Linear, Slack, Figma, Notion, Xero, Shopify, Google Workspace |
+| 1 | Automated via API or Docker | Supabase (token + Management API), n8n (Docker) |
+| 2 | Agent browser (user-supervised; hybrid Google SSO → email+password; pauses for OTP/CAPTCHA) | OpenRouter, Resend, Linear, Notion |
+| 3 | Human-assisted (deep links + guidance) | Slack, Figma, Xero, Shopify, Google Workspace, Airtable |
+
+Playbooks: `skills/bootstrap/playbooks/<service>.md`. On automation failure, degrade to Tier 3 for that service.

@@ -10,11 +10,13 @@ Set up Supabase for PostgreSQL database, authentication, and storage.
 
 ## Setup
 
+**Prefer bootstrap:** follow [skills/bootstrap/playbooks/supabase.md](../bootstrap/playbooks/supabase.md) (browser access token + Management API project creation). Manual fallback:
+
 1. Go to https://supabase.com/dashboard/sign_up and create an account
 2. Create a new project — choose a name, generate a strong database password
 3. Wait for the project to provision (takes ~2 minutes)
 4. Go to Project Settings → API to find your `Project Reference ID` and `URL`
-5. Go to Project Settings → Access Tokens → New access token (with `project:read` and `project:write` scopes)
+5. Go to https://supabase.com/dashboard/account/tokens and create an access token
 6. Add to `.env`:
    ```
    SUPABASE_URL=https://<project-ref>.supabase.co

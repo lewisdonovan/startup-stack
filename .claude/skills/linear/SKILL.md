@@ -10,6 +10,8 @@ Set up Linear for project management, issue tracking, and sprint planning.
 
 ## Setup
 
+**Prefer bootstrap:** follow [skills/bootstrap/playbooks/linear.md](../bootstrap/playbooks/linear.md) (agent browser, hybrid auth). Manual fallback:
+
 1. Go to https://linear.app/signup and create an account (or use existing)
 2. Create a workspace for your startup (Settings → Workspaces → New workspace)
 3. Go to Settings → APIs → New API Key → Personal API key

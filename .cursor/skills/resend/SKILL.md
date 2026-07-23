@@ -10,6 +10,8 @@ Set up Resend for transactional email and email templates.
 
 ## Setup
 
+**Prefer bootstrap:** follow [skills/bootstrap/playbooks/resend.md](../bootstrap/playbooks/resend.md) (agent browser, hybrid auth). Manual fallback:
+
 1. Go to https://resend.com/signup and create an account
 2. Verify your email address
 3. Go to API Keys → Create API key

@@ -7,15 +7,17 @@ description: Set up a complete agentic workspace with AI inference, MCP servers,
 
 Run this skill to set up a complete agentic workspace with AI inference, MCP servers, and platform skills for a new startup.
 
+Provisioning is **agent-driven**: collect a profile, open the user's browser (when available), create accounts / API keys, write gitignored `.env`, generate configs, and verify connectivity. Follow [playbooks/_protocol.md](playbooks/_protocol.md) for hybrid auth, human gates, and secret handling.
+
 ## Entry
 
 When the user wants to bootstrap a new startup, say:
 
-> "Let's bootstrap your Startup Stack. I'll walk you through setting up your services, generate all the config files, and get your agentic workspace ready.
+> "Let's bootstrap your Startup Stack. I'll collect a short profile, help you pick services, then provision accounts (browser + API/Docker where possible), write your `.env`, and wire up MCP + skills.
 >
-> Here are the services you can choose from:"
+> I'll pause whenever email verification, CAPTCHA, or OAuth consent is needed."
 
-Then present the service catalog (below) and ask the user to select which services they want.
+Then run the flow below.
 
 ---
 
@@ -25,17 +27,17 @@ Then present the service catalog (below) and ask the user to select which servic
 
 | Service | Purpose | Tier |
 |---------|---------|------|
-| **OpenRouter** | AI model routing (free tier, $0/token) | 1 |
+| **OpenRouter** | AI model routing (free tier, $0/token) | 2 |
 | **Context7** | Library documentation lookup | Built-in |
 
 ### Optional Services
 
 | Service | Purpose | Tier |
 |---------|---------|------|
-| **Linear** | Project management, issues, sprints | 3 |
+| **Linear** | Project management, issues, sprints | 2 |
 | **Supabase** | PostgreSQL database, auth, storage | 1 |
-| **Resend** | Transactional email, templates | 1 |
-| **Notion** | Documentation, wikis, knowledge base | 3 |
+| **Resend** | Transactional email, templates | 2 |
+| **Notion** | Documentation, wikis, knowledge base | 2 |
 | **Slack** | Team communication, channels | 3 |
 | **Figma** | Design files, component library | 3 |
 | **Shopify** | E-commerce, inventory, orders | 3 |
@@ -45,142 +47,111 @@ Then present the service catalog (below) and ask the user to select which servic
 | **Airtable** | Spreadsheet-database hybrid | 3 |
 
 **Tier key:**
-- **Tier 1** — Fully automated via API or Docker
-- **Tier 3** — Human-assisted (you'll provide deep links and step-by-step guidance)
+- **Tier 1** — Automated via API or Docker (`skills/bootstrap/playbooks/`)
+- **Tier 2** — Agent browser (hybrid Google SSO → email+password; human gates for OTP/CAPTCHA)
+- **Tier 3** — Human-assisted deep links + step-by-step guidance (`docs/services.md`)
 
-Ask the user which services they want. Default to only OpenRouter + Context7 if they say "not sure" or "set up the basics."
+Default if the user is unsure: **OpenRouter + Context7** only. Suggest Linear + Supabase + Resend for a typical SaaS stack.
 
 ---
 
 ## Flow
 
-For each selected service, follow the provisioning guide in `docs/services.md`. Collect any required credentials from the user. Then proceed to config generation.
+### Step 0: Collect Profile
 
-### Step 1: Collect Credentials
+Ask for:
 
-As the user provides credentials, record them in a dictionary. For Tier 3 services the user may need to sign up first — guide them through the signup process, then collect the credentials.
+1. `full_name`
+2. `email`
+3. `company_name`
 
-For each service, tell the user exactly what to do:
+Confirm a **browser MCP** is available (Chrome DevTools / Cursor browser tools). If not:
 
-**Tier 1 (API):**
-> "Go to [signup URL], [specific instructions], then paste back your [credential type]."
+> "I don't have browser tools in this session. I'll use deep-link guidance for signup services. n8n Docker can still be automated locally."
 
-**Tier 3 (Human-assisted):**
-> "Go to [signup URL], create an account, then [specific instructions to get API key/token]. Paste it back here when ready."
+### Step 1: Select Services + Existing Accounts
 
-### Step 2: Generate Config Files
+Present the catalog. After selection, for each Tier 1/2 service ask whether they **already have an account** (`existing` vs `new`). Record answers.
 
-Once all selected services have credentials (or are queued for manual setup), generate these files:
+### Step 2: Provision Each Service
 
-#### `.mcp.json`
+Process services one at a time (or in a clear sequence). For each:
 
-Write this file with the configured MCP servers for all selected services:
+| Service | Playbook |
+|---------|----------|
+| OpenRouter | [playbooks/openrouter.md](playbooks/openrouter.md) |
+| Resend | [playbooks/resend.md](playbooks/resend.md) |
+| Linear | [playbooks/linear.md](playbooks/linear.md) |
+| Notion | [playbooks/notion.md](playbooks/notion.md) |
+| Supabase | [playbooks/supabase.md](playbooks/supabase.md) |
+| n8n | [playbooks/n8n.md](playbooks/n8n.md) |
+| Slack, Figma, Shopify, Xero, Google Workspace, Airtable | Tier 3 — `docs/services.md` |
 
-```json
-{
-  "mcpServers": {
-    "openrouter": {
-      "command": "npx",
-      "args": ["-y", "@openrouter/mcp-server"],
-      "env": {
-        "OPENROUTER_API_KEY": "<OPENROUTER_API_KEY>"
-      }
-    },
-    "supabase": {
-      "command": "npx",
-      "args": ["-y", "@supabase/mcp"],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "<SUPABASE_ACCESS_TOKEN>",
-        "SUPABASE_PROJECT_REF": "<SUPABASE_PROJECT_REF>"
-      }
-    },
-    "resend": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/resend-mcp"],
-      "env": {
-        "RESEND_API_KEY": "<RESEND_API_KEY>"
-      }
-    }
-  }
-}
-```
+Always load [playbooks/_protocol.md](playbooks/_protocol.md) first.
 
-Map each selected service to its MCP server. Use `@linear-app/mcp-server` for Linear, `@modelcontextprotocol/slack` for Slack, `@modelcontextprotocol/notion` for Notion, `@anthropic/figma-mcp` for Figma, `@xero-integration/mcp-server` for Xero, `@shopify/mcp-server` for Shopify, `@n8n-mcp` for n8n, `@anthropic/google-workspace-mcp` for Google Workspace, `@airtable/mcp` for Airtable. For n8n, use `command: "<n8n_base_url>"` with transport `sse`.
+On failure: degrade that service to Tier 3; continue with the rest.
+
+### Step 3: Generate Config Files
+
+Once selected services have credentials (or are deferred to manual):
 
 #### `.env`
 
-Instruct the user to copy `.env.example` to `.env` and fill in their credentials. Do NOT write `.env` yourself — never commit secrets.
+- If `.env` is missing: `cp .env.example .env`
+- Upsert all collected secrets using the protocol's `upsert_env` pattern
+- Update `.env.example` placeholders for every selected service (names only, empty values)
+- Confirm written **key names** in chat — never re-print secret values
 
-> "Copy `.env.example` to `.env` in this directory and fill in your credentials. This file is gitignored and should never be committed."
+#### `.mcp.json`
 
-#### `.env.example`
+Write MCP server entries for all selected services. Map packages:
 
-Ensure `.env.example` exists in the project root. It should list all env var placeholders for every service the user selected (and always include the full list for reference).
+- OpenRouter → `@openrouter/mcp-server` / `OPENROUTER_API_KEY`
+- Linear → `@linear-app/mcp-server` / `LINEAR_API_KEY`
+- Slack → `@modelcontextprotocol/slack` / `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_TEAM_ID`
+- Figma → `@anthropic/figma-mcp` / `FIGMA_ACCESS_TOKEN`
+- Notion → `@modelcontextprotocol/notion` / `NOTION_API_KEY`
+- Supabase → `@supabase/mcp` / `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`
+- Resend → `@anthropic/resend-mcp` (or `resend-mcp`) / `RESEND_API_KEY`
+- Xero → `@xero-integration/mcp-server` / Xero OAuth env vars
+- Shopify → `@shopify/mcp-server` / Shopify env vars
+- n8n → SSE/`curl` with `N8N_BASE_URL`, `N8N_API_KEY`
+- Google Workspace → `@anthropic/google-workspace-mcp`
+- Airtable → `@airtable/mcp`
 
-### Step 3: Generate CLAUDE.md
+Prefer env placeholders like `"<OPENROUTER_API_KEY>"` or harness env substitution — **do not** embed live secrets in committed `.mcp.json` if the file will be committed. Local-only `.mcp.json` may reference env vars the harness injects.
 
-Rewrite the `CLAUDE.md` file with the user's selected services populated. Replace the placeholder comments with actual service listings:
+#### `CLAUDE.md`
 
-1. Add the active services list with names and brief descriptions
-2. List each MCP server with its config name
-3. List available skills based on selected services
-4. Keep all the existing operating principles, error handling, and workflow sections
+Rewrite with:
 
-Example of the active services section:
+1. Active services list
+2. MCP server list
+3. Available skills for selected services
+4. Existing operating principles, error handling, workflows
 
-```markdown
-### Active Services
-- OpenRouter — AI inference via `openrouter/free` endpoint
-- Context7 — Library documentation lookup
-- Linear — Project management and issue tracking
-- Supabase — PostgreSQL database with authentication
-- Resend — Transactional email
-```
+#### Skills directory
 
-Example of MCP servers section:
+Ensure `skills/<service>/SKILL.md` exists for each selected service (use repo templates). Create cross-platform skills only when both sides were selected:
 
-```markdown
-### MCP Servers
-- Linear (`@linear-app/mcp-server`)
-- Supabase (`@supabase/mcp`)
-- Resend (`@anthropic/resend-mcp`)
-```
-
-Example of available skills section:
-
-```markdown
-### Available Skills
-- [Set up project tracking](skills/linear/SKILL.md)
-- [Create a database table](skills/supabase/SKILL.md)
-- [Send a transactional email](skills/resend/SKILL.md)
-```
-
-### Step 4: Create Skills Directory
-
-Create the skills directory structure for all selected services. For each selected service, create a `skills/<service>/SKILL.md` file with:
-
-1. A one-line description
-2. Required platforms tag
-3. Step-by-step setup instructions
-4. Example prompts to trigger workflows
-
-Use the existing skill files as templates (see skill directories in this repo). For services without a pre-written skill, create a minimal one with the structure above.
-
-Also create cross-platform skills for any service pairs that have synergies:
 - Linear + Notion → `skills/cross-platform/notion-sync-to-linear/SKILL.md`
 - Shopify + Xero → `skills/cross-platform/shopify-orders-to-xero/SKILL.md`
+- Notion + Resend (+ n8n) → `skills/cross-platform/notion-notify-via-email/SKILL.md`
 
-Only create cross-platform skills if both required services were selected.
+### Step 4: Verify
 
-### Step 5: Run Verification
+```bash
+set -a && source .env && set +a
+bash scripts/verify-mcp.sh
+```
 
-Run `bash scripts/verify-mcp.sh` to check connectivity for all configured services. Report the results.
+Report pass / skip / fail. For failures, point at the relevant playbook or `docs/services.md`.
 
 ---
 
 ## Config File Templates
 
-### .mcp.json — Full Reference
+### `.mcp.json` — Full Reference
 
 ```json
 {
@@ -198,7 +169,11 @@ Run `bash scripts/verify-mcp.sh` to check connectivity for all configured servic
     "slack": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/slack"],
-      "env": { "SLACK_BOT_TOKEN": "<SLACK_BOT_TOKEN>", "SLACK_SIGNING_SECRET": "<SLACK_SIGNING_SECRET>", "SLACK_TEAM_ID": "<SLACK_TEAM_ID>" }
+      "env": {
+        "SLACK_BOT_TOKEN": "<SLACK_BOT_TOKEN>",
+        "SLACK_SIGNING_SECRET": "<SLACK_SIGNING_SECRET>",
+        "SLACK_TEAM_ID": "<SLACK_TEAM_ID>"
+      }
     },
     "figma": {
       "command": "npx",
@@ -213,7 +188,10 @@ Run `bash scripts/verify-mcp.sh` to check connectivity for all configured servic
     "supabase": {
       "command": "npx",
       "args": ["-y", "@supabase/mcp"],
-      "env": { "SUPABASE_ACCESS_TOKEN": "<SUPABASE_ACCESS_TOKEN>", "SUPABASE_PROJECT_REF": "<SUPABASE_PROJECT_REF>" }
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "<SUPABASE_ACCESS_TOKEN>",
+        "SUPABASE_PROJECT_REF": "<SUPABASE_PROJECT_REF>"
+      }
     },
     "resend": {
       "command": "npx",
@@ -223,23 +201,38 @@ Run `bash scripts/verify-mcp.sh` to check connectivity for all configured servic
     "xero": {
       "command": "npx",
       "args": ["-y", "@xero-integration/mcp-server"],
-      "env": { "XERO_CLIENT_ID": "<XERO_CLIENT_ID>", "XERO_CLIENT_SECRET": "<XERO_CLIENT_SECRET>", "XERO_REFRESH_TOKEN": "<XERO_REFRESH_TOKEN>" }
+      "env": {
+        "XERO_CLIENT_ID": "<XERO_CLIENT_ID>",
+        "XERO_CLIENT_SECRET": "<XERO_CLIENT_SECRET>",
+        "XERO_REFRESH_TOKEN": "<XERO_REFRESH_TOKEN>"
+      }
     },
     "shopify": {
       "command": "npx",
       "args": ["-y", "@shopify/mcp-server"],
-      "env": { "SHOPIFY_API_KEY": "<SHOPIFY_API_KEY>", "SHOPIFY_ACCESS_TOKEN": "<SHOPIFY_ACCESS_TOKEN>", "SHOPIFY_STORE_DOMAIN": "<SHOPIFY_STORE_DOMAIN>" }
+      "env": {
+        "SHOPIFY_API_KEY": "<SHOPIFY_API_KEY>",
+        "SHOPIFY_ACCESS_TOKEN": "<SHOPIFY_ACCESS_TOKEN>",
+        "SHOPIFY_STORE_DOMAIN": "<SHOPIFY_STORE_DOMAIN>"
+      }
     },
     "n8n": {
       "command": "curl",
       "args": [],
-      "env": { "N8N_BASE_URL": "<N8N_BASE_URL>", "N8N_API_KEY": "<N8N_API_KEY>" },
+      "env": {
+        "N8N_BASE_URL": "<N8N_BASE_URL>",
+        "N8N_API_KEY": "<N8N_API_KEY>"
+      },
       "transport": "sse"
     },
     "google-workspace": {
       "command": "npx",
       "args": ["-y", "@anthropic/google-workspace-mcp"],
-      "env": { "GOOGLE_CLIENT_ID": "<GOOGLE_CLIENT_ID>", "GOOGLE_CLIENT_SECRET": "<GOOGLE_CLIENT_SECRET>", "GOOGLE_REFRESH_TOKEN": "<GOOGLE_REFRESH_TOKEN>" }
+      "env": {
+        "GOOGLE_CLIENT_ID": "<GOOGLE_CLIENT_ID>",
+        "GOOGLE_CLIENT_SECRET": "<GOOGLE_CLIENT_SECRET>",
+        "GOOGLE_REFRESH_TOKEN": "<GOOGLE_REFRESH_TOKEN>"
+      }
     },
     "airtable": {
       "command": "npx",
@@ -250,45 +243,37 @@ Run `bash scripts/verify-mcp.sh` to check connectivity for all configured servic
 }
 ```
 
-### .env.example — Template
+### `.env.example`
 
-See the `.env.example` file in the project root. It contains placeholders for all 12 services.
+See the project-root `.env.example`. After bootstrap, it should list placeholders for every selected service.
 
-### CLAUDE.md — Template
+### `CLAUDE.md`
 
-The generated CLAUDE.md should include:
-- The full agent instructions (from this repo's CLAUDE.md)
-- Active services list (populated from user selection)
-- MCP server list (populated from user selection)
-- Available skills list (populated from user selection)
-- All existing operating principles, error handling, and workflow sections
+Include full agent instructions plus populated Active Services, MCP Servers, and Available Skills sections.
 
 ---
 
 ## Error Handling
 
-- **Missing credentials:** Tell the user exactly which key is needed and where to find it. Reference `docs/services.md` for detailed signup instructions.
-- **API call fails:** Check if the error is authentication-related (guide to refresh token), rate-limiting (implement backoff), or a missing resource (create it or inform the user).
-- **MCP server not found:** The user may need to install the server package first. Run `npm install -g <package-name>` and retry.
-- **n8n Docker setup fails:** Guide the user through manual Docker Compose setup with the n8n image.
+- **Human gate:** Pause with a clear ask; resume after the user replies.
+- **Missing browser MCP:** Tier 2 → Tier 3 for that service.
+- **API / Docker failure:** Check auth, rate limits, or missing resources; retry once; then inform the user.
+- **MCP package missing:** `npx -y <package>` usually suffices; otherwise guide install.
+- **n8n Docker fails:** Ensure Docker is running; fall back to cloud/self-hosted steps in `docs/services.md` / `skills/n8n/SKILL.md`.
 
 ---
 
 ## Completion
 
-After all steps are done, summarize:
+Summarize:
 
-> "Bootstrap complete! Here's what was set up:
+> "Bootstrap complete!
 >
 > - **Services configured:** [list]
 > - **MCP servers:** [list from .mcp.json]
-> - **Skills created:** [list]
-> - **Config files:** `.mcp.json`, `.env` (you need to fill in), `CLAUDE.md`
+> - **Skills:** [list]
+> - **Config files:** `.mcp.json`, `.env` (gitignored), `CLAUDE.md`
 >
-> Your agentic workspace is ready. Open this directory in Claude Code (or your preferred harness) and start chatting.
+> Treat `.env` as your password vault for any accounts created during bootstrap.
 >
-> Try saying things like:
-> - 'Set up my project tracking in Linear'
-> - 'Create a waitlist table in Supabase'
-> - 'Send a welcome email template'
-> - 'Sync my Notion notes to Linear issues'"
+> Try: 'Set up my project tracking in Linear', 'Create a waitlist table in Supabase', 'Send a welcome email template'."

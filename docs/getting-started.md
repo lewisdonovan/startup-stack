@@ -45,11 +45,14 @@ Or simply:
 > "Set up my Startup Stack"
 
 The assistant will:
-1. Show you the service catalog
-2. Ask which services you want
-3. Guide you through account creation for each one
-4. Generate all config files (MCP servers, environment, skills)
-5. Verify everything is connected
+1. Collect a short profile (name, email, company)
+2. Show you the service catalog and ask which services you want
+3. Provision accounts — browser automation for OpenRouter, Resend, Linear, and Notion; Docker for n8n; Management API for Supabase after an access token
+4. Pause when email verification, CAPTCHA, or OAuth consent is needed
+5. Write credentials to gitignored `.env`, generate MCP configs and skills
+6. Verify everything is connected
+
+For best results, use a harness with browser tools (e.g. Cursor + Chrome DevTools MCP) so Tier 2 services can be driven in your browser. Without a browser MCP, those services fall back to deep-link guidance.
 
 That's it. Your workspace is ready.
 
@@ -62,24 +65,19 @@ You                     AI Harness                  Services
  │                      │                              │
  │  "Run /bootstrap"    │                              │
  ├─────────────────────►│                              │
- │                      │  Reads skills/bootstrap.md   │
- │                      ├─────────────────────────────►│
- │                      │  Presents service catalog    │
- │  "I want Linear     │                              │
- │   and Supabase"     │                              │
+ │                      │  Reads skills/bootstrap      │
+ │                      │  Collects name/email/company │
+ │  profile + services│                              │
  ├─────────────────────►│                              │
- │                      │  Guides account signup       │
- │                      ├─────────────────────────────►│
- │                      │  Linear + Supabase signups   │
- │                      │                              │
+ │                      │  Browser / Docker / API      │
+ │  (OTP / CAPTCHA)    │  playbooks as needed         │
+ │◄─────────────────────┤─────────────────────────────►│
+ │                      │  Writes .env (gitignored)    │
  │                      │  Generates .mcp.json         │
  │                      │  Generates CLAUDE.md         │
- │                      │  Creates skills/ structure   │
- │                      │                              │
- │  "All done!"        │                              │
  │                      │  Runs verify-mcp.sh          │
- │                      ├─────────────────────────────►│
- │                      │  Reports results             │
+ │  "All done!"        │                              │
+ │◄─────────────────────┤                              │
 ```
 
 ---
@@ -117,7 +115,7 @@ Not sure which services to pick? Here's a cheat sheet:
 
 ### "I have no idea, just start"
 
-Say "not sure" — it'll set up OpenRouter, Linear, and Supabase by default. That covers code management, database, and AI.
+Say "not sure" — it'll set up OpenRouter + Context7 by default. For a typical SaaS stack, ask for Linear, Supabase, and Resend as well.
 
 ---
 
@@ -173,25 +171,25 @@ Check that your `.env` file exists and has the right credentials for that servic
 bash scripts/verify-mcp.sh
 ```
 
-This will show which services are working and which are failing.
+The script auto-loads `.env` from the project root when present. This will show which services are working and which are failing.
 
 ### "I don't have an API key for X"
 
-See `docs/services.md` — each service has signup instructions and a link to where you get the key. For Tier 3 services (human-assisted), the assistant will guide you step-by-step through signup.
+Prefer re-running bootstrap for that service (see `skills/bootstrap/playbooks/`). Otherwise see `docs/services.md` for signup URLs. Tier 2 services may need you to complete email verification or a CAPTCHA in the browser; Tier 3 services are deep-link guided.
 
 ### "My AI harness doesn't read skills/"
 
-Not all harnesses support the skills/ directory natively. If yours doesn't, just open the `skills/bootstrap.md` file and paste the contents into the chat. The assistant can still follow the instructions.
+Not all harnesses support the skills/ directory natively. If yours doesn't, open `skills/bootstrap/SKILL.md` and paste the contents into the chat. The assistant can still follow the instructions.
 
 ### "n8n won't start"
 
 n8n requires Docker. Install Docker Desktop from https://docker.com, then run:
 
 ```bash
-docker run -d --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n n8nio/n8n
+bash scripts/setup-n8n.sh
 ```
 
-Get the API key from n8n's settings, then add it to your `.env`.
+Open http://localhost:5678 to finish owner setup, create an API key in Settings → n8n API, and ensure `N8N_BASE_URL` / `N8N_API_KEY` are in `.env` (bootstrap does this when following the n8n playbook).
 
 ---
 

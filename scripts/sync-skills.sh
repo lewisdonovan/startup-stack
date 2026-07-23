@@ -7,7 +7,6 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 SKILLS="$REPO_ROOT/skills"
-HARNESS="$REPO_ROOT/.harness"
 
 # Harness directories to sync to
 HARNESSES=(
@@ -18,17 +17,17 @@ HARNESSES=(
   ".agents/skills"
 )
 
-echo "Syncing skills to $HARNESS/"
+echo "Syncing skills to harness-specific folders in the root directory."
 echo ""
 
 for harness in "${HARNESSES[@]}"; do
-  target="$HARNESS/$harness"
-  mkdir -p "$HARNESS/$(dirname "$harness")"
+  target="$harness"
+  mkdir -p "$(dirname "$harness")"
   rm -rf "$target"
   cp -r "$SKILLS" "$target"
+  git add "$target"
   echo "✓ $harness"
 done
 
 echo ""
-echo "Done. Skills are in .harness/ — add this to git:"
-echo "  git add .harness/"
+echo "Done. Skills are in harness-specific folders in the root directory."

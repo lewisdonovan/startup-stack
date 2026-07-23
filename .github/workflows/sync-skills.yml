@@ -1,0 +1,33 @@
+name: Sync Skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'lewisdonovan' || github.repository == 'lewisdonovan/startup-stack'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync skills to harness directories
+        run: bash scripts/sync-skills.sh
+
+      - name: Commit synced skills
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .harness/
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: sync skills to harness directories [skip ci]"
+            git push
+          fi

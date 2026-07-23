@@ -11,7 +11,7 @@ Run this skill to set up a complete agentic workspace with AI inference, MCP ser
 
 When the user wants to bootstrap a new startup, say:
 
-> "Let's bootstrap your startup toolkit. I'll walk you through setting up your services, generate all the config files, and get your agentic workspace ready.
+> "Let's bootstrap your Startup Stack. I'll walk you through setting up your services, generate all the config files, and get your agentic workspace ready.
 >
 > Here are the services you can choose from:"
 

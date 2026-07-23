@@ -42,7 +42,7 @@ In the chat, type:
 
 Or simply:
 
-> "Set up my startup toolkit"
+> "Set up my Startup Stack"
 
 The assistant will:
 1. Show you the service catalog

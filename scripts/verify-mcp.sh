@@ -8,9 +8,9 @@ PASS=0
 FAIL=0
 SKIP=0
 
-pass() { echo -e "\033[32m✓\033[0m  $1"; ((PASS++)); }
-fail() { echo -e "\033[31m✗\033[0m  $1"; ((FAIL++)); }
-skip() { echo -e "\033[33m⊘\033[0m  $1 (not configured)"; ((SKIP++)); }
+pass() { echo -e "\033[32m✓\033[0m  $1"; PASS=$((PASS + 1)); }
+fail() { echo -e "\033[31m✗\033[0m  $1"; FAIL=$((FAIL + 1)); }
+skip() { echo -e "\033[33m⊘\033[0m  $1 (not configured)"; SKIP=$((SKIP + 1)); }
 
 echo "========================================"
 echo "  MCP Server Connectivity Check"
@@ -34,7 +34,7 @@ fi
 # ── Resend ──────────────────────────────────────────────────
 if [ -n "${RESEND_API_KEY:-}" ]; then
   if curl -sf -H "Authorization: Bearer $RESEND_API_KEY" \
-    "https://api.resend.com/emails" >/dev/null 2>&1; then
+    "https://api.resend.com/domains" >/dev/null 2>&1; then
     pass "Resend is reachable"
   else
     fail "Resend failed — check your API key"
@@ -73,6 +73,7 @@ fi
 if [ -n "${NOTION_API_KEY:-}" ]; then
   if curl -sf -H "Authorization: Bearer $NOTION_API_KEY" \
     -H "Content-Type: application/json" \
+    -H "Notion-Version: 2022-06-28" \
     "https://api.notion.com/v1/users/me" >/dev/null 2>&1; then
     pass "Notion is reachable"
   else

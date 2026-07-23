@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "openrouter": {
+      "command": "npx",
+      "args": ["-y", "@openrouter/mcp-server"],
+      "env": {
+        "OPENROUTER_API_KEY": "<OPENROUTER_API_KEY>"
+      }
+    },
+    "resend": {
+      "command": "npx",
+      "args": ["-y", "resend-mcp"],
+      "env": {
+        "RESEND_API_KEY": "<RESEND_API_KEY>"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/notion"],
+      "env": {
+        "NOTION_API_KEY": "<NOTION_API_KEY>",
+        "NOTION_INTEGRATION_TYPE": "<NOTION_INTEGRATION_TYPE>"
+      }
+    },
+    "n8n": {
+      "command": "curl",
+      "args": [],
+      "env": {
+        "N8N_BASE_URL": "<N8N_BASE_URL>",
+        "N8N_API_KEY": "<N8N_API_KEY>"
+      },
+      "transport": "sse"
+    }
+  }
+}

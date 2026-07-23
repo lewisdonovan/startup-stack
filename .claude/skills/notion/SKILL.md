@@ -13,7 +13,7 @@ Set up Notion for documentation, wikis, and knowledge base management.
 **Prefer bootstrap:** follow [skills/bootstrap/playbooks/notion.md](../bootstrap/playbooks/notion.md) (agent browser, hybrid auth). Manual fallback:
 
 1. Go to https://www.notion.so/signup and create an account
-2. Go to https://app.notion.com/developers/tokens and create a new API key
+2. Go to https://www.notion.so/my-integrations and create a new integration
 3. Give it a name (e.g., "Startup Stack"), select the workspace, and generate a secret
 4. Copy the secret and add to `.env`: `NOTION_API_KEY=<secret>`
 5. `NOTION_INTEGRATION_TYPE=Internal`
